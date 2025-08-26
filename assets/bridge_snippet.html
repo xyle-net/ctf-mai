@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мост корабля - Проверка доступа</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0b3d91 0%, #1a1a2e 100%);
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #4fc3f7;
+            text-shadow: 0 0 10px rgba(79, 195, 247, 0.8);
+            margin-bottom: 30px;
+        }
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: rgba(0, 30, 60, 0.5);
+            border-radius: 8px;
+            border: 1px solid #1976d2;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        label {
+            font-weight: bold;
+            color: #29b6f6;
+        }
+        input {
+            padding: 12px;
+            border-radius: 5px;
+            border: 1px solid #1976d2;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            font-size: 16px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #4fc3f7;
+            box-shadow: 0 0 10px rgba(79, 195, 247, 0.5);
+        }
+        input.correct {
+            border-color: #4caf50;
+            background: rgba(76, 175, 80, 0.2);
+            color: #a5d6a7;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+        button {
+            padding: 14px;
+            background: #1976d2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #0d47a1;
+            box-shadow: 0 0 10px rgba(13, 71, 161, 0.7);
+        }
+        .hint {
+            color: #ff9800;
+            font-style: italic;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 152, 0, 0.1);
+            border-radius: 5px;
+            border-left: 3px solid #ff9800;
+            text-align: center;
+        }
+        .password-hint {
+            color: #4caf50;
+            margin-top: 5px;
+            font-size: 0.9em;
+            text-align: center;
+        }
+        
+        /* Модальное окно */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: linear-gradient(135deg, #0b3d91 0%, #1a1a2e 100%);
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 400px;
+            width: 80%;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            border: 2px solid #4fc3f7;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 20px rgba(79, 195, 247, 0.5); }
+            50% { box-shadow: 0 0 30px rgba(79, 195, 247, 0.8); }
+            100% { box-shadow: 0 0 20px rgba(79, 195, 247, 0.5); }
+        }
+        .modal h2 {
+            color: #4caf50;
+            margin-top: 0;
+        }
+        .modal p {
+            margin: 20px 0;
+            font-size: 18px;
+        }
+        .close-btn {
+            padding: 10px 20px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        .access-denied {
+            color: #f44336;
+            text-align: center;
+            margin-top: 15px;
+            font-weight: bold;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Мост корабля - Доступ к рубке</h1>
+        
+        <div class="login-form">
+            <div class="input-group">
+                <label for="user">Пользователь:</label>
+                <input type="text" id="user" value="captain" readonly>
+            </div>
+            <div class="input-group">
+                <label for="pass">Пароль:</label>
+                <input type="password" id="pass" placeholder="Введите пароль">
+            </div>
+            <button onclick="checkPassword()">Войти</button>
+            <div id="access-denied" class="access-denied">❌ Неверный пароль! Доступ запрещен.</div>
+        </div>
+
+    </div>
+
+    <!-- Модальное окно -->
+    <div id="success-modal" class="modal">
+        <div class="modal-content">
+            <h2>✅ Доступ разрешен!</h2>
+            <p>Добро пожаловать в рубку, капитан!</p>
+            <p>Пароль: <strong>orbit2025</strong></p>
+            <button class="close-btn" onclick="closeModal()">Закрыть</button>
+        </div>
+    </div>
+
+    <script>
+        const correctPassword = "orbit2025";
+        const passwordInput = document.getElementById('pass');
+        const accessDenied = document.getElementById('access-denied');
+        const successModal = document.getElementById('success-modal');
+
+        function checkPassword() {
+            const password = passwordInput.value;
+            
+            if (password === correctPassword) {
+                // Правильный пароль
+                passwordInput.classList.add('correct');
+                accessDenied.style.display = 'none';
+                
+                // Показываем модальное окно
+                successModal.style.display = 'flex';
+            } else {
+                // Неправильный пароль
+                passwordInput.classList.remove('correct');
+                accessDenied.style.display = 'block';
+            }
+        }
+
+        function closeModal() {
+            successModal.style.display = 'none';
+        }
+
+        // Закрытие модального окна при клике вне его
+        window.onclick = function(event) {
+            if (event.target === successModal) {
+                closeModal();
+            }
+        }
+
+        // Возможность использовать Enter для ввода пароля
+        passwordInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                checkPassword();
+            }
+        });
+    </script>
+</body>
+</html>

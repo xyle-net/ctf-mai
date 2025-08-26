@@ -1,0 +1,9 @@
+ls -la
+cd /opt/tools
+git status
+nano notes.txt
+# todo: rotate keys
+echo 'backup complete'
+grep -R "MOONBASE" -n
+export SECRET=MOONBASE{SWEET_DREAMS}
+exit

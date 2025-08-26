@@ -1,0 +1,86 @@
+
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>МАИ CTF — Космическая карта</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="hud">
+    <h1>🛰️ МАИ CTF x 2025</h1>
+    <div id="progress"><span id="progress-count">0</span>/7 модулей</div>
+  </div>
+
+  <div id="map">
+    <svg id="stations" viewBox="0 0 1200 640" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3.5" result="blur"></feGaussianBlur>
+          <feMerge>
+            <feMergeNode in="blur"></feMergeNode>
+            <feMergeNode in="SourceGraphic"></feMergeNode>
+          </feMerge>
+        </filter>
+        <linearGradient id="tileGrad" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stop-color="#5a5f6b" />
+          <stop offset="100%" stop-color="#3f4350" />
+        </linearGradient>
+      </defs>
+
+      <g class="module" id="airlock" transform="translate(180,340)">
+        <circle r="46" cx="40" cy="0" class="node"/>
+        <text y="80" x="40" class="label">БОРТОВОЙ КОМПЬЮТЕР</text>
+      </g>
+
+      <g class="module" id="bridge" transform="translate(370,250)">
+        <circle r="46" x="-48" y="-48" width="96" height="96" rx="12" class="node"/>
+        <text y="80" class="label">РУБКА</text>
+      </g>
+
+      <g class="module" id="power" transform="translate(600,120)">
+        <circle r="46" x="-50" y="-40" class="node"/>
+        <text y="80" class="label">ЭНЕРГОБЛОК</text>
+      </g>
+
+      <g class="module" id="robots" transform="translate(600,320)">
+        <circle r="40"  x="-10" y="-50" class="node"/>
+        <text y="80" class="label">РОБОТЫ</text>
+      </g>
+
+      <g class="module" id="lab" transform="translate(840,380)">
+        <circle r="40" x="-52" y="-20" class="node"/>
+        <text y="80" class="label">ЛАБОРАТОРИЯ</text>
+      </g>
+
+      <g class="module" id="comms" transform="translate(860,200)">
+        <circle r="40" x="-42" y="-42"  class="node"/>
+        <text y="80" class="label">СВЯЗЬ</text>
+      </g>
+
+      <g class="module" id="quarters" transform="translate(420,500)">
+        <circle r="40" x="-48" y="-28" width="96" height="56" rx="10" class="node"/>
+        <text y="70" class="label">ЭЛЮМИНАТОР</text>
+      </g>
+    </svg>
+  </div>
+
+  <div id="terminal" class="hidden">
+    <div class="crt">
+      <div class="term-header">
+        <span>STATION/AI v0.73</span>
+        <button id="closeTerm" title="Закрыть">×</button>
+      </div>
+      <div id="term-output" class="term-output"></div>
+      <div class="term-input">
+        <span>&gt;</span>
+        <input id="cmd" autocomplete="off" autofocus placeholder="введите команду или ответ и нажмите Enter">
+      </div>
+    </div>
+  </div>
+
+  <audio id="keySound" src="assets/keyclick.mp3" preload="auto"></audio>
+  <script src="main.js"></script>
+</body>
+</html>

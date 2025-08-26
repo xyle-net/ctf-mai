@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Терминал на космическом фоне</title>
+<style>
+body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(circle at 20% 20%, #0b0f33, #1a1f4b 40%, #2c2a5c 70%, #0f111a);
+  overflow: hidden;
+  position: relative;
+  font-family: monospace;
+}
+
+/* Звёзды на фоне */
+.star {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+  opacity: 0.8;
+  animation: twinkle 2s infinite alternate;
+}
+
+@keyframes twinkle {
+  0% { opacity: 0.3; }
+  50% { opacity: 1; }
+  100% { opacity: 0.3; }
+}
+
+.terminal-window {
+  background-color: #1e1e1e;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 900px;
+  height: 80%;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  z-index: 1; /* поверх звёзд */
+}
+
+.terminal-header {
+  background-color: #2c2c2c;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.button {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.button.red { background-color: #ff5f56; }
+.button.yellow { background-color: #ffbd2e; }
+.button.green { background-color: #27c93f; }
+
+.terminal-body {
+  flex: 1;
+  padding: 16px;
+  color: #d4d4d4;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
+.command { color: #9cdcfe; }
+.comment { color: #6a9955; }
+.output { color: #d4d4d4; }
+.cursor { display: inline-block; width: 8px; background-color: #d4d4d4; animation: blink 1s step-start infinite; }
+@keyframes blink { 50% { background-color: transparent; } }
+</style>
+</head>
+<body>
+<div class="terminal-window">
+  <div class="terminal-header">
+    <div class="button red"></div>
+    <div class="button yellow"></div>
+    <div class="button green"></div>
+    <span style="color:#d4d4d4; margin-left: 8px;">bash - .bash_history</span>
+  </div>
+  <div class="terminal-body" id="terminal"></div>
+</div>
+
+<script>
+// Создаём звёзды на фоне
+const starCount = 150;
+for (let i = 0; i < starCount; i++) {
+  const star = document.createElement('div');
+  star.className = 'star';
+  const size = Math.random() * 2 + 1; // 1-3px
+  star.style.width = `${size}px`;
+  star.style.height = `${size}px`;
+  star.style.top = `${Math.random() * 100}%`;
+  star.style.left = `${Math.random() * 100}%`;
+  star.style.animationDuration = `${Math.random() * 3 + 2}s`;
+  document.body.appendChild(star);
+}
+
+// Анимация набора текста в терминале
+const terminal = document.getElementById('terminal');
+
+const lines = [
+  { type: 'command', text: 'ls -la\n' },
+  { type: 'output', text: 'total 48\ndrwxr-xr-x 6 user user 4096 Aug 26 2025 .\ndrwxr-xr-x 3 user user 4096 Aug 26 2025 ..\n-rw------- 1 user user  220 Aug 26 2025 .bash_history\n' },
+  { type: 'command', text: 'cd /opt/tools\n' },
+  { type: 'command', text: 'git status\n' },
+  { type: 'output', text: 'On branch main\nnothing to commit, working tree clean\n' },
+  { type: 'command', text: 'nano notes.txt\n' },
+  { type: 'comment', text: '# todo: rotate keys\n' },
+  { type: 'command', text: "echo 'backup complete'\n" },
+  { type: 'output', text: 'backup complete\n' },
+  { type: 'command', text: 'grep -R "MOONBASE" -n\n' },
+  { type: 'output', text: './secret.txt:1:MOONBASE{SWEET_DREAMS}\n' },
+  { type: 'command', text: 'export SECRET=MOONBASE{SWEET_DREAMS}\n' },
+  { type: 'command', text: 'exit\n' }
+];
+
+let lineIndex = 0;
+let charIndex = 0;
+
+function typeLine() {
+  if (lineIndex >= lines.length) return;
+
+  const line = lines[lineIndex];
+  const span = document.createElement('span');
+  span.className = line.type;
+  terminal.appendChild(span);
+
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor';
+  terminal.appendChild(cursor);
+
+  function typeChar() {
+    if (charIndex < line.text.length) {
+      span.textContent += line.text[charIndex];
+      charIndex++;
+      terminal.scrollTop = terminal.scrollHeight;
+      setTimeout(typeChar, 30);
+    } else {
+      charIndex = 0;
+      lineIndex++;
+      cursor.remove();
+      setTimeout(typeLine, 100);
+    }
+  }
+  typeChar();
+}
+
+typeLine();
+</script>
+</body>
+</html>

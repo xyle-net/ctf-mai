@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Авиадиспетчерский радар</title>
+<style>
+body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  background: #0a1520;
+  overflow: hidden;
+  font-family: 'Courier New', monospace;
+  color: #0f9;
+}
+
+.container {
+  display: flex;
+  height: 100vh;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.radar-container {
+  flex: 7;
+  position: relative;
+  background: #000;
+  border: 1px solid #0f9;
+  border-radius: 4px;
+  margin-right: 10px;
+  overflow: hidden;
+}
+
+.radar {
+  position: absolute;
+  width: 90%;
+  height: 90%;
+  top: 5%;
+  left: 5%;
+  border: 2px solid #0f9;
+  border-radius: 50%;
+  box-shadow: 0 0 20px rgba(0, 255, 153, 0.3);
+  overflow: hidden;
+}
+
+.radar-sweep {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 0%;
+  background: conic-gradient(transparent 270deg, rgba(0, 255, 153, 0.2) 300deg, transparent 330deg);
+  transform-origin: center;
+  animation: sweep 4s linear infinite;
+}
+
+@keyframes sweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.radar-grid {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: 
+    radial-gradient(circle at center, transparent 0%, transparent 20%, rgba(0, 255, 153, 0.1) 20%, rgba(0, 255, 153, 0.1) 100%),
+    repeating-radial-gradient(circle at center, transparent 0%, transparent 5%, rgba(0, 255, 153, 0.05) 5%, rgba(0, 255, 153, 0.05) 10%);
+}
+
+.radar-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  background: #0f9;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.plane {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: transparent;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: blink 1.5s infinite;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.plane::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  background: #ff0;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 10px #ff0;
+}
+
+.plane::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  border: 1px solid rgba(255, 255, 0, 0.5);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: pulse 2s infinite;
+}
+
+.plane.paused::after {
+  animation: none;
+  border-color: #f55;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes pulse {
+  0% { width: 16px; height: 16px; opacity: 1; }
+  100% { width: 30px; height: 30px; opacity: 0; }
+}
+
+.plane-info {
+  position: absolute;
+  background: rgba(0, 20, 10, 0.9);
+  border: 1px solid #0f9;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  width: 220px;
+  transform: translate(15px, -50%);
+  display: none;
+  color: #fff;
+  z-index: 100;
+  box-shadow: 0 0 15px rgba(0, 255, 153, 0.5);
+  backdrop-filter: blur(5px);
+}
+
+.plane-info h4 {
+  margin: 0 0 8px 0;
+  color: #ffa;
+  border-bottom: 1px solid #0f9;
+  padding-bottom: 4px;
+}
+
+.plane-info p {
+  margin: 4px 0;
+  line-height: 1.4;
+}
+
+.plane-info .specs {
+  color: #5af;
+}
+
+.plane-info .role {
+  color: #f0f;
+}
+
+.plane:hover .plane-info {
+  display: block;
+}
+
+.plane-details-panel {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 300px;
+  background: rgba(0, 20, 10, 0.9);
+  border: 1px solid #0f9;
+  border-radius: 4px;
+  padding: 15px;
+  color: #fff;
+  z-index: 200;
+  box-shadow: 0 0 20px rgba(0, 255, 153, 0.7);
+  backdrop-filter: blur(5px);
+  display: none;
+}
+
+.plane-details-panel h3 {
+  margin: 0 0 10px 0;
+  color: #ffa;
+  border-bottom: 1px solid #0f9;
+  padding-bottom: 5px;
+}
+
+.plane-details-panel .close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #f55;
+  border: none;
+  color: white;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.plane-details-panel .detail-row {
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.plane-details-panel .detail-label {
+  width: 145px;
+  color: #0f9;
+  font-weight: bold;
+}
+
+.plane-details-panel .detail-value {
+  flex: 1;
+}
+
+.plane-details-panel .specs {
+  color: #5af;
+  font-style: italic;
+}
+
+.plane-details-panel .role {
+  color: #f0f;
+}
+
+.log-panel {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+}
+
+.status-bar {
+  background: #071018;
+  border: 1px solid #0f9;
+  border-radius: 4px;
+  padding: 8px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.log-window {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid #0f9;
+  border-radius: 4px;
+  padding: 10px;
+  overflow-y: auto;
+  font-size: 12px;
+  box-shadow: 0 0 10px rgba(0, 255, 153, 0.2);
+}
+
+.entry { 
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 255, 153, 0.2);
+}
+.date { 
+  color: #0f9; 
+  font-weight: bold;
+}
+.flight-id {
+  color: #ffa;
+  font-weight: bold;
+}
+.note { 
+  color: #5af;
+  font-style: italic;
+}
+.alert {
+  color: #f55;
+  font-weight: bold;
+}
+.variable { 
+  color: #f0f;
+  background: rgba(255, 0, 255, 0.1);
+  padding: 2px 4px;
+  border-radius: 2px;
+  font-family: monospace;
+}
+
+.control-panel {
+  margin-top: 10px;
+  background: #071018;
+  border: 1px solid #0f9;
+  border-radius: 4px;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.control-panel button {
+  background: #0a2a1a;
+  border: 1px solid #0f9;
+  color: #0f9;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+}
+
+.control-panel button:hover {
+  background: #0f9;
+  color: #000;
+}
+
+.scan-line {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(to bottom, transparent, #0f9, transparent);
+  transform-origin: center;
+  animation: scanLine 4s linear infinite;
+}
+
+@keyframes scanLine {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.range-markers {
+  position: absolute;
+  top: 5%;
+  left: 5%;
+  width: 90%;
+  height: 90%;
+}
+
+.range-marker {
+  position: absolute;
+  color: #0f9;
+  font-size: 10px;
+}
+
+.range-marker.n { top: 0; left: 50%; transform: translateX(-50%); }
+.range-marker.e { top: 50%; right: 0; transform: translateY(-50%); }
+.range-marker.s { bottom: 0; left: 50%; transform: translateX(-50%); }
+.range-marker.w { top: 50%; left: 0; transform: translateY(-50%); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="radar-container">
+    <div class="radar">
+      <div class="radar-grid"></div>
+      <div class="radar-sweep"></div>
+      <div class="radar-center"></div>
+      <div class="scan-line"></div>
+      <div class="range-markers">
+        <div class="range-marker n">N</div>
+        <div class="range-marker e">E</div>
+        <div class="range-marker s">S</div>
+        <div class="range-marker w">W</div>
+      </div>
+      <div id="planes-container"></div>
+    </div>
+  </div>
+  
+  <div class="plane-details-panel" id="plane-details">
+    <button class="close-btn" onclick="closeDetails()">×</button>
+    <h3 id="detail-title">Информация о самолете</h3>
+    <div class="detail-row">
+      <div class="detail-label">Бортовой номер:</div>
+      <div class="detail-value" id="detail-flight"></div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">Модель:</div>
+      <div class="detail-value" id="detail-model"></div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">Тип:</div>
+      <div class="detail-value" id="detail-type"></div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">Маршрут:</div>
+      <div class="detail-value" id="detail-route"></div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">Высота:</div>
+      <div class="detail-value" id="detail-altitude"></div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">Скорость:</div>
+      <div class="detail-value" id="detail-speed"></div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">Назначение:</div>
+      <div class="detail-value role" id="detail-role"></div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">Характеристики:</div>
+      <div class="detail-value specs" id="detail-specs"></div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">Год ввода:</div>
+      <div class="detail-value" id="detail-year"></div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">Страна:</div>
+      <div class="detail-value" id="detail-country"></div>
+    </div>
+  </div>
+  
+  <div class="log-panel">
+    <div class="status-bar">
+      <div>СИСТЕМА: <span style="color:#ffa">АКТИВНА</span></div>
+      <div>САМОЛЁТОВ: <span id="plane-count" style="color:#ffa">0</span></div>
+      <div>ВРЕМЯ: <span id="current-time" style="color:#ffa">00:00:00</span></div>
+    </div>
+    
+    <div class="log-window" id="log"></div>
+    
+    <div class="control-panel">
+      <button id="autoscroll-btn" onclick="toggleAutoScroll()">АВТОПРОКРУТКА</button>
+      <button onclick="clearLog()">ОЧИСТИТЬ ЖУРНАЛ</button>
+      <button onclick="addTestFlight()">ТЕСТОВЫЙ РЕЙС</button>
+      <button onclick="resumeAll()">ВОЗОБНОВИТЬ ВСЕ</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Модели самолетов с информацией
+const AIRCRAFT_MODELS = [
+  {
+    name: "Су-27",
+    fullName: "Сухой Су-27",
+    type: "Многоцелевой истребитель",
+    country: "Россия",
+    specs: "Дальность: 3530 км, Макс. скорость: 2500 км/ч",
+    role: "Завоевание превосходства в воздухе, перехват",
+    year: "1985"
+  },
+  {
+    name: "Су-57",
+    fullName: "Сухой Су-57",
+    type: "Истребитель пятого поколения",
+    country: "Россия",
+    specs: "Дальность: 5500 км, Макс. скорость: 2600 км/ч",
+    role: "Многоцелевой истребитель, малозаметность",
+    year: "2010"
+  },
+  {
+    name: "Ту-160",
+    fullName: "Туполев Ту-160",
+    type: "Стратегический бомбардировщик",
+    country: "Россия",
+    specs: "Дальность: 12300 км, Макс. скорость: 2220 км/ч",
+    role: "Стратегические бомбардировки, ядерное сдерживание",
+    year: "1987"
+  },
+  {
+    name: "МиГ-29",
+    fullName: "Микоян МиГ-29",
+    type: "Фронтовой истребитель",
+    country: "Россия",
+    specs: "Дальность: 2100 км, Макс. скорость: 2450 км/ч",
+    role: "Завоевание превосходства в воздухе",
+    year: "1983"
+  },
+  {
+    name: "Су-35",
+    fullName: "Сухой Су-35",
+    type: "Многоцелевой истребитель 4++ поколения",
+    country: "Россия",
+    specs: "Дальность: 3600 км, Макс. скорость: 2500 км/ч",
+    role: "Завоевание превосходства в воздухе",
+    year: "2008"
+  },
+  {
+    name: "Ил-76",
+    fullName: "Ильюшин Ил-76",
+    type: "Военно-транспортный самолёт",
+    country: "Россия",
+    specs: "Дальность: 6700 км, Макс. скорость: 900 км/ч",
+    role: "Военные и гуманитарные перевозки",
+    year: "1974"
+  },
+  {
+    name: "Ан-124",
+    fullName: "Антонов Ан-124 Руслан",
+    type: "Тяжёлый военно-транспортный самолёт",
+    country: "СССР/Украина",
+    specs: "Дальность: 16500 км, Макс. скорость: 865 км/ч",
+    role: "Перевозка крупногабаритных грузов",
+    year: "1986"
+  },
+  {
+    name: "Як-130",
+    fullName: "Яковлев Як-130",
+    type: "Учебно-боевой самолёт",
+    country: "Россия",
+    specs: "Дальность: 2000 км, Макс. скорость: 1060 км/ч",
+    role: "Подготовка лётчиков, лёгкий штурмовик",
+    year: "2004"
+  }
+];
+
+// Конфигурация
+const FLIGHT_PREFIXES = ['SU', 'AF', 'LH', 'BA', 'DL', 'UA', 'TK', 'AY'];
+const FLIGHT_NUMBERS = ['123', '456', '789', '101', '202', '303', '404', '505'];
+const AIRPORTS = ['SVO', 'DME', 'LED', 'KJA', 'VKO', 'AER', 'OVB', 'KRR'];
+const MESSAGES = [
+  'Запрос на взлёт',
+  'Получено разрешение на взлёт',
+  'Набор высоты',
+  'Крейсерская высота достигнута',
+  'Запрос на изменение курса',
+  'Снижение начато',
+  'Заход на посадку',
+  'Посадка выполнена',
+  'Руление к терминалу',
+  'Подключение к телетрапу'
+];
+
+// Глобальные переменные
+let planes = [];
+let autoScroll = true;
+let logEntries = [];
+let lastUpdateTime = Date.now();
+let keyDisplayed = false;
+let animationId = null;
+
+// Инициализация
+window.addEventListener('load', function() {
+  initializeRadar();
+  updateClock();
+  setInterval(updateClock, 1000);
+  animationId = requestAnimationFrame(updatePlaneData);
+  setInterval(addRandomLogEntry, 3000);
+  setInterval(updateSystemStatus, 5000);
+  
+  // Отложенное отображение ключа (через 30 секунд)
+  setTimeout(displaySecretKey, 30000);
+});
+
+// Инициализация радара
+function initializeRadar() {
+  const planesContainer = document.getElementById('planes-container');
+  planesContainer.innerHTML = '';
+  planes = [];
+  
+  // Создание самолётов
+  const planeCount = 8;
+  for (let i = 0; i < planeCount; i++) {
+    addPlane();
+  }
+  
+  // Начальные записи в журнал
+  addLogEntry('system', 'Инициализация системы радара');
+  addLogEntry('system', `Обнаружено ${planeCount} воздушных судов`);
+  addLogEntry('note', 'Система работает в штатном режиме');
+  addLogEntry('alert', 'ВНИМАНИЕ: Зашифрованный ключ активации появится в журнале через 30 секунд');
+  addLogEntry('note', 'Нажмите на самолет для просмотра детальной информации и остановки');
+}
+
+// Добавление самолёта
+function addPlane() {
+  const planesContainer = document.getElementById('planes-container');
+  const plane = document.createElement('div');
+  plane.className = 'plane';
+  
+  // Выбираем случайную модель самолета
+  const aircraft = AIRCRAFT_MODELS[Math.floor(Math.random() * AIRCRAFT_MODELS.length)];
+  const flightId = FLIGHT_PREFIXES[Math.floor(Math.random() * FLIGHT_PREFIXES.length)] + 
+                   FLIGHT_NUMBERS[Math.floor(Math.random() * FLIGHT_NUMBERS.length)];
+  const from = AIRPORTS[Math.floor(Math.random() * AIRPORTS.length)];
+  const to = AIRPORTS[Math.floor(Math.random() * AIRPORTS.length)];
+  
+  const altitude = Math.floor(Math.random() * 10000) + 1000;
+  const speed = Math.floor(Math.random() * 800) + 200;
+  
+  // Создаем информационную панель
+  const infoDiv = document.createElement('div');
+  infoDiv.className = 'plane-info';
+  infoDiv.innerHTML = `
+    <h4>${aircraft.fullName}</h4>
+    <p><strong>Тип:</strong> ${aircraft.type}</p>
+    <p><strong>Бортовой номер:</strong> ${flightId}</p>
+    <p><strong>Маршрут:</strong> ${from} → ${to}</p>
+    <p><strong>Высота:</strong> ${altitude}m | <strong>Скорость:</strong> ${speed}km/h</p>
+    <p class="specs"><strong>Характеристики:</strong> ${aircraft.specs}</p>
+    <p class="role"><strong>Назначение:</strong> ${aircraft.role}</p>
+    <p><strong>Год ввода:</strong> ${aircraft.year} | <strong>Страна:</strong> ${aircraft.country}</p>
+  `;
+  
+  plane.appendChild(infoDiv);
+  
+  // Начальная позиция
+  const angle = Math.random() * Math.PI * 2;
+  const distance = 30 + Math.random() * 55;
+  const left = 50 + Math.cos(angle) * distance;
+  const top = 50 + Math.sin(angle) * distance;
+  
+  plane.style.left = `${left}%`;
+  plane.style.top = `${top}%`;
+  
+  // Обработчик клика для показа детальной информации
+  plane.addEventListener('click', function(e) {
+    e.stopPropagation();
+    showPlaneDetails({
+      flightId: flightId,
+      aircraft: aircraft,
+      from: from,
+      to: to,
+      altitude: altitude,
+      speed: speed
+    });
+    
+    // Останавливаем этот самолет
+    plane.classList.add('paused');
+    plane.dataset.paused = 'true';
+  });
+  
+  planesContainer.appendChild(plane);
+  
+  // Замедляем движение самолетов
+  planes.push({
+    element: plane,
+    flightId: flightId,
+    aircraft: aircraft,
+    from: from,
+    to: to,
+    altitude: altitude,
+    speed: speed,
+    dx: (Math.random() * 0.2 - 0.1),
+    dy: (Math.random() * 0.2 - 0.1),
+    paused: false
+  });
+  
+  document.getElementById('plane-count').textContent = planes.length;
+  
+  // Запись в журнал
+  addLogEntry('entry', `Рейс ${flightId} (${aircraft.name}) вылетел из ${from} в ${to}`);
+}
+
+// Показать детальную информацию о самолете
+function showPlaneDetails(plane) {
+  const detailsPanel = document.getElementById('plane-details');
+  document.getElementById('detail-title').textContent = plane.aircraft.fullName;
+  document.getElementById('detail-flight').textContent = plane.flightId;
+  document.getElementById('detail-model').textContent = plane.aircraft.name;
+  document.getElementById('detail-type').textContent = plane.aircraft.type;
+  document.getElementById('detail-route').textContent = `${plane.from} → ${plane.to}`;
+  document.getElementById('detail-altitude').textContent = `${plane.altitude} м`;
+  document.getElementById('detail-speed').textContent = `${plane.speed} км/ч`;
+  document.getElementById('detail-role').textContent = plane.aircraft.role;
+  document.getElementById('detail-specs').textContent = plane.aircraft.specs;
+  document.getElementById('detail-year').textContent = plane.aircraft.year;
+  document.getElementById('detail-country').textContent = plane.aircraft.country;
+  
+  detailsPanel.style.display = 'block';
+}
+
+// Закрыть панель деталей
+function closeDetails() {
+  document.getElementById('plane-details').style.display = 'none';
+}
+
+// Возобновить движение всех самолетов
+function resumeAll() {
+  const allPlanes = document.querySelectorAll('.plane');
+  allPlanes.forEach(plane => {
+    plane.classList.remove('paused');
+    plane.dataset.paused = 'false';
+  });
+  closeDetails();
+}
+
+// Обновление позиций самолётов
+function updatePlaneData() {
+  const now = Date.now();
+  const deltaTime = (now - lastUpdateTime) / 1000;
+  lastUpdateTime = now;
+  
+  planes.forEach(plane => {
+    // Пропускаем остановленные самолеты
+    if (plane.element.dataset.paused === 'true') {
+      return;
+    }
+    
+    // Обновление позиции с учетом времени
+    let left = parseFloat(plane.element.style.left);
+    let top = parseFloat(plane.element.style.top);
+    
+    // Замедляем движение
+    left += plane.dx * deltaTime * 8;
+    top += plane.dy * deltaTime * 8;
+    
+    // Отскок от границ
+    if (left < 5 || left > 95) plane.dx *= -1;
+    if (top < 5 || top > 95) plane.dy *= -1;
+    
+    // Ограничение позиции
+    left = Math.max(5, Math.min(95, left));
+    top = Math.max(5, Math.min(95, top));
+    
+    plane.element.style.left = `${left}%`;
+    plane.element.style.top = `${top}%`;
+    
+    // Случайное изменение курса (реже)
+    if (Math.random() < 0.02) {
+      plane.dx += (Math.random() * 0.2 - 0.1);
+      plane.dy += (Math.random() * 0.2 - 0.1);
+      
+      // Нормализация скорости
+      const speed = Math.sqrt(plane.dx * plane.dx + plane.dy * plane.dy);
+      if (speed > 0.5) {
+        plane.dx /= speed;
+        plane.dy /= speed;
+      }
+    }
+    
+    // Обновление данных (реже)
+    if (Math.random() < 0.005) {
+      plane.altitude += Math.floor(Math.random() * 200 - 100);
+      if (plane.altitude < 1000) plane.altitude = 1000;
+      if (plane.altitude > 10000) plane.altitude = 10000;
+      
+      plane.speed += Math.floor(Math.random() * 50 - 25);
+      if (plane.speed < 200) plane.speed = 200;
+      if (plane.speed > 1000) plane.speed = 1000;
+      
+      const infoDiv = plane.element.querySelector('.plane-info');
+      if (infoDiv) {
+        infoDiv.innerHTML = `
+          <h4>${plane.aircraft.fullName}</h4>
+          <p><strong>Тип:</strong> ${plane.aircraft.type}</p>
+          <p><strong>Бортовой номер:</strong> ${plane.flightId}</p>
+          <p><strong>Маршрут:</strong> ${plane.from} → ${plane.to}</p>
+          <p><strong>Высота:</strong> ${plane.altitude}m | <strong>Скорость:</strong> ${plane.speed}km/h</p>
+          <p class="specs"><strong>Характеристики:</strong> ${plane.aircraft.specs}</p>
+          <p class="role"><strong>Назначение:</strong> ${plane.aircraft.role}</p>
+          <p><strong>Год ввода:</strong> ${plane.aircraft.year} | <strong>Страна:</strong> ${plane.aircraft.country}</p>
+        `;
+      }
+    }
+  });
+  
+  animationId = requestAnimationFrame(updatePlaneData);
+}
+
+// Добавление записи в журнал
+function addLogEntry(type, text) {
+  const log = document.getElementById('log');
+  const entry = document.createElement('div');
+  entry.className = 'entry';
+  
+  const timestamp = new Date();
+  const timeStr = timestamp.toLocaleTimeString();
+  
+  let content = '';
+  if (type === 'system') {
+    content = `<span class="date">[${timeStr}]</span> <span class="flight-id">СИСТЕМА:</span> ${text}`;
+  } else if (type === 'entry') {
+    content = `<span class="date">[${timeStr}]</span> ${text}`;
+  } else if (type === 'note') {
+    content = `<span class="note">[${timeStr}] ${text}</span>`;
+  } else if (type === 'alert') {
+    content = `<span class="alert">[${timeStr}] ${text}</span>`;
+  } else if (type === 'variable') {
+    content = `<span class="variable">[${timeStr}] ${text}</span>`;
+  } else {
+    content = text;
+  }
+  
+  entry.innerHTML = content;
+  log.appendChild(entry);
+  
+  if (autoScroll) {
+    log.scrollTop = log.scrollHeight;
+  }
+  
+  logEntries.push({type, text, time: timestamp});
+}
+
+// Добавление случайной записи в журнал
+function addRandomLogEntry() {
+  if (planes.length === 0) return;
+  
+  const plane = planes[Math.floor(Math.random() * planes.length)];
+  const message = MESSAGES[Math.floor(Math.random() * MESSAGES.length)];
+  
+  addLogEntry('entry', `Рейс ${plane.flightId} (${plane.aircraft.name}): ${message}`);
+}
+
+// Отображение секретного ключа
+function displaySecretKey() {
+  if (!keyDisplayed) {
+    addLogEntry('alert', 'АКТИВАЦИЯ: Секретный ключ доступа сгенерирован');
+    addLogEntry('variable', 'КЛЮЧ_ДОСТУПА=MOONBASE{4V14T10N_R4D4R}');
+    addLogEntry('note', 'Ключ будет действителен в течение 24 часов');
+    keyDisplayed = true;
+  }
+}
+
+// Обновление системного статуса
+function updateSystemStatus() {
+  const statusMessages = [
+    'Проверка каналов связи... OK',
+    'Синхронизация с GPS... OK',
+    'Мониторинг погодных условий... OK',
+    'Проверка резервных систем... OK'
+  ];
+  
+  const randomMessage = statusMessages[Math.floor(Math.random() * statusMessages.length)];
+  addLogEntry('system', randomMessage);
+  
+  // После 30 секунд добавляем напоминание о ключе
+  if (!keyDisplayed && Date.now() - lastUpdateTime > 25000) {
+    addLogEntry('alert', 'ВНИМАНИЕ: Секретный ключ появится через несколько секунд');
+  }
+}
+
+// Обновление времени
+function updateClock() {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString();
+  document.getElementById('current-time').textContent = timeStr;
+}
+
+// Переключение автопрокрутки
+function toggleAutoScroll() {
+  autoScroll = !autoScroll;
+  const button = document.getElementById('autoscroll-btn');
+  button.textContent = autoScroll ? 'АВТОПРОКРУТКА' : 'ПРОКРУТКА ВКЛ';
+  
+  if (autoScroll) {
+    const log = document.getElementById('log');
+    log.scrollTop = log.scrollHeight;
+  }
+}
+
+// Очистка журнала
+function clearLog() {
+  const log = document.getElementById('log');
+  log.innerHTML = '';
+  logEntries = [];
+  addLogEntry('system', 'Журнал очищен');
+  
+  // Если ключ уже был показан, показываем его снова после очистки
+  if (keyDisplayed) {
+    setTimeout(() => {
+      addLogEntry('variable', 'КЛЮЧ_ДОСТУПА=MOONBASE{4V14T10N_R4D4R}');
+    }, 1000);
+  }
+}
+
+// Добавление тестового рейса
+function addTestFlight() {
+  addPlane();
+  addLogEntry('system', 'Добавлен тестовый рейс');
+}
+
+// Закрытие панели деталей при клике вне ее
+document.addEventListener('click', function(e) {
+  const detailsPanel = document.getElementById('plane-details');
+  if (detailsPanel.style.display === 'block' && !detailsPanel.contains(e.target)) {
+    closeDetails();
+  }
+});
+</script>
+
+</body>
+</html>
